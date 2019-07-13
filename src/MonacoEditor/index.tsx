@@ -10,7 +10,8 @@ export interface EditorProps {
   options?: monaco.editor.IEditorOverrideServices;
   editorWillMount?(context: typeof monaco): void;
   original?: string;
-  language: string;
+  language?: string;
+  model?: monaco.editor.IModel
 
   editorDidMount?(editor: monaco.editor.IStandaloneCodeEditor, context: typeof monaco): void;
   onChange?(value: string, event: monaco.editor.IModelContentChangedEvent): void;
@@ -22,7 +23,6 @@ export class MonacoEditor extends React.Component<EditorProps> {
     height: "100%",
     value: undefined,
     defaultValue: "",
-    language: "javascript",
     theme: undefined,
     options: {},
     editorDidMount: undefined,
@@ -58,7 +58,7 @@ export class MonacoEditor extends React.Component<EditorProps> {
       }
     }
     const e = this.editor;
-    if (e && prevProps.language !== this.props.language) {
+    if (this.props.language && e && prevProps.language !== this.props.language) {
       monaco.editor.setModelLanguage(e.getModel() as monaco.editor.ITextModel, this.props.language);
     }
     if (prevProps.theme !== this.props.theme) {
@@ -102,23 +102,32 @@ export class MonacoEditor extends React.Component<EditorProps> {
 
   initMonaco() {
     const value = this.props.value !== null ? this.props.value : this.props.defaultValue;
-    const { language, theme, options } = this.props;
+    const { language, model, theme, options } = this.props;
     const container = this.containerElement.current;
+
+    const createOpts: monaco.editor.IEditorConstructionOptions = {
+      value,
+      ...options
+    }
+    if (language) {
+      createOpts.language = language
+    }
+    if (model) {
+      createOpts.model = model
+    }
     if (container) {
       // Before initializing monaco editor
       this.editorWillMount();
-      this.editor = monaco.editor.create(container, {
-        value,
-        language,
-        ...options
-      });
-
+      this.editor = monaco.editor.create(container, createOpts);
       if (theme) {
         monaco.editor.setTheme(theme);
       }
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }
+  }
+  public getEditor() {
+    return this.editor
   }
 
   destroyMonaco() {

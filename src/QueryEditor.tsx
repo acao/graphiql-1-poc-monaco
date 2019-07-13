@@ -1,68 +1,53 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
 import { MonacoEditor } from "./MonacoEditor";
+import GraphiQLContext from "./GraphiQLContext";
 
-type GraphiQLProps = {};
+const { KeyMod: KM, KeyCode: KC } = monaco;
 
-type GraphiQLState = {
-  code: string;
+type QueryEditorProps = {
+  query?: string;
+  updateQuery?(value: string, event: monaco.editor.IModelContentChangedEvent): void;
 };
 
-// Using with webpack
-export default class QueryEditor extends React.Component<GraphiQLProps, GraphiQLState> {
-  editor!: monaco.editor.IStandaloneCodeEditor;
-  constructor(props: GraphiQLProps) {
-    super(props);
-    this.state = {
-      code: "// type your code... \n"
-    };
-  }
+const options = {
+  selectOnLineNumbers: true,
+  roundedSelection: false,
+  readOnly: false,
+  cursorStyle: "line",
+  automaticLayout: false
+};
 
-  onChange = (newValue: string, e: any) => {
-    console.log("onChange", newValue, e); // eslint-disable-line no-console
+export default function(props: QueryEditorProps) {
+  let editor;
+  const ctx = React.useContext(GraphiQLContext);
+  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+    editor = editorInstance;
+    editor.addCommand(KM.CtrlCmd | KC.Enter, async () => {
+      await ctx.submitQuery();
+    });
+    monaco.languages.registerHoverProvider("graphql", {
+      async provideHover(model, position, token) {
+        console.log(model, position, token);
+        return ctx.provideHoverInfo(position, token);
+      }
+    });
+    monaco.languages.registerCompletionItemProvider("graphql", {
+      async provideCompletionItems(model, position, token) {
+        console.log(model, position, token);
+        return ctx.provideHoverInfo(position);
+      }
+    });
   };
-
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    // eslint-disable-next-line no-console
-    console.log("editorDidMount", editor, editor.getValue(), editor.getModel());
-    this.editor = editor;
-  };
-
-  changeEditorValue = () => {
-    if (this.editor) {
-      this.editor.setValue("// code changed! \n");
-    }
-  };
-
-  changeBySetState = () => {
-    this.setState({ code: "// code changed by setState! \n" });
-  };
-
-  render() {
-    const { code } = this.state;
-    const options = {
-      selectOnLineNumbers: true,
-      roundedSelection: false,
-      readOnly: false,
-      cursorStyle: "line",
-      automaticLayout: false
-    };
-    return (
-      <div>
-        <div>
-          <button onClick={this.changeEditorValue}>Change value</button>
-          <button onClick={this.changeBySetState}>Change by setState</button>
-        </div>
-        <hr />
-        <MonacoEditor
-          height="500px"
-          language="graphql"
-          value={code}
-          options={options}
-          onChange={this.onChange}
-          editorDidMount={this.editorDidMount}
-        />
-      </div>
-    );
-  }
+  return (
+    <MonacoEditor
+      height="60vh"
+      width="100%"
+      language={'graphql'}
+      value={ctx.query}
+      options={options}
+      onChange={props.updateQuery || ctx.updateQuery}
+      editorDidMount={didMount}
+    />
+  );
 }

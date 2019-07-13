@@ -1,3 +1,4 @@
+const webpack = require('webpack')
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
@@ -26,26 +27,37 @@ module.exports = {
         use: ["file?name=[name].[ext]"]
       },
       {
+        type: "javascript/auto",
+        test: /\.mjs$/,
+        use: [],
+        include: /node_modules/
+      },
+      {
         test: /\.(ts|tsx)$/,
         use: [{ loader: "ts-loader" }]
       },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"]
-      }
+      },
     ]
   },
   resolve: {
-    extensions: [".js", ".json", ".ts", ".tsx", ".jsx", ".css"]
+    extensions: [".js", ".json", ".ts", ".tsx", ".jsx", ".css", ".mjs"]
   },
   plugins: [
     new MonacoWebpackPlugin({
-      languages: ['json', 'graphql']
-    }), 
-    new HtmlWebpackPlugin({ template: "index.html.ejs" })
+      languages: ["json", "graphql"]
+    }),
+    new HtmlWebpackPlugin({ template: "index.html.ejs" }),
+    new webpack.ContextReplacementPlugin(
+				/graphql-language-service-interface[\\/]dist$/,
+				new RegExp(`^\\./.*\\.js$`)
+			)
   ],
   devServer: {
-    hot: true
+    hot: true,
+    allowedHosts: ["www.bob.autoparts.com", "autoparts.com"]
   },
   node: {
     fs: "empty"

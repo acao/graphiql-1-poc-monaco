@@ -1,17 +1,29 @@
 import * as React from "react";
-import { render } from "react-dom";
 
 import QueryEditor from "./QueryEditor";
 import VariablesEditor from "./VariablesEditor";
+import { GraphiQLProvider } from "./GraphiQLContext";
+import ResultsViewer from "./ResultsViewer";
 
-export default class GraphiQL extends React.Component {
-  render() {
-    return <div>
-        <h2>Monaco Editor Sample (controlled mode)</h2>
-        <QueryEditor />
-        <hr />
-        <VariablesEditor />
-        <h2>Another editor (uncontrolled mode)</h2>
+const GraphiQL = () => {
+  return (
+    <GraphiQLProvider>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row"
+        }}
+      >
+        <div style={{ display: "flex", width: "50%", flexDirection: "column" }}>
+          <QueryEditor />
+          <VariablesEditor  />
+        </div>
+        <div style={{ display: "flex", width: "50%" }}>
+          <ResultsViewer />
+        </div>
       </div>
-  }
-}
+    </GraphiQLProvider>
+  );
+};
+
+export default GraphiQL;

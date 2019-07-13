@@ -1,66 +1,31 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
+import GraphiQLContext from "./GraphiQLContext";
+import { MonacoEditor } from "./MonacoEditor";
 
-import { MonacoEditor } from './MonacoEditor'
+const { KeyMod: KM, KeyCode: KC } = monaco;
 
-export type VariablesEditorProps = {};
-export type VariablesEditorState = {
-  value: string;
+export type VariablesEditorProps = {
+  variables?: string;
+  onChangeVariables?: (variables: any) => void;
 };
-// Using with require.config
-export default class VariablesEditor extends React.Component<VariablesEditorProps, VariablesEditorState> {
-  constructor(props: VariablesEditorProps) {
-    super(props);
-    const jsonCode = ["{", '    "$schema": "http://myserver/foo-schema.json"', "}"].join("\n");
-    this.state = {
-      value: jsonCode
-    };
-  }
-
-  editorWillMount = (monaco: any) => {
-    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-      schemas: [
-        {
-          uri: "http://myserver/foo-schema.json",
-          schema: {
-            type: "object",
-            properties: {
-              p1: {
-                enum: ["v1", "v2"]
-              },
-              p2: {
-                $ref: "http://myserver/bar-schema.json"
-              }
-            }
-          }
-        },
-        {
-          uri: "http://myserver/bar-schema.json",
-          schema: {
-            type: "object",
-            properties: {
-              q1: {
-                enum: ["x1", "x2"]
-              }
-            }
-          }
-        }
-      ]
+let editor;
+export default function VariablesEditor(props: VariablesEditorProps) {
+  const ctx = React.useContext(GraphiQLContext);
+  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+    editor = editorInstance;
+    editor.addCommand(KM.CtrlCmd | KC.Enter, async () => {
+      await ctx.submitQuery();
     });
   };
-  render() {
-    const { value } = this.state;
-
-    return (
-      <div>
-        <MonacoEditor
-          width="800px"
-          height="600px"
-          language="json"
-          defaultValue={value}
-          editorWillMount={this.editorWillMount}
-        />
-      </div>
-    );
-  }
+  return (
+    <MonacoEditor
+      width="100%"
+      height="30vh"
+      language="json"
+      value={props.variables || ctx.variables}
+      onChange={props.onChangeVariables || ctx.updateVariables}
+      editorDidMount={didMount}
+    />
+  );
 }
