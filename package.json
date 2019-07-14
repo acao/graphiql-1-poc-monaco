@@ -2,7 +2,8 @@
   "name": "graphiql-1-poc",
   "entrypoint": "src/index.ts",
   "scripts": {
-    "start:dev": "webpack-dev-server"
+    "start:dev": "webpack-dev-server",
+    "build": "webpack"
   },
   "devDependencies": {
     "@types/graphql": "^14.2.2",
@@ -21,10 +22,13 @@
     "webpack-dev-server": "^3.7.2"
   },
   "dependencies": {
+    "@types/prettier": "^1.16.4",
     "graphql": "^14.4.2",
     "graphql-language-service-interface": "^2.0.0",
     "graphql-language-service-parser": "^1.2.2",
+    "graphql-language-service-utils": "^2.0.0",
     "monaco-editor": "^0.17.1",
+    "prettier": "^1.18.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-i18next": "^10.11.4",

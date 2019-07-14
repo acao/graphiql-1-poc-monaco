@@ -3,6 +3,8 @@ import * as monaco from "monaco-editor";
 import { getIntrospectionQuery, buildClientSchema, GraphQLSchema } from "graphql";
 // @ts-ignore
 import { getHoverInformation } from "graphql-language-service-interface";
+// @ts-ignore
+import { Position } from "graphql-language-service-utils"
 
 export interface IGraphQLQuery {
   url: string;
@@ -18,7 +20,7 @@ export interface IGraphiQLBaseContext {
   reloadSchema: () => Promise<GraphQLSchema | null>;
   updateResult: (result: string) => React.SetStateAction<any>;
   provideHoverInfo: (position: monaco.Position, token?: monaco.CancellationToken) => Promise<any>;
-  editorLoaded: (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => Promise<void>;
+  editorLoaded: (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => any;
 }
 
 export interface IEditorInstance {
@@ -110,17 +112,14 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
   public updateQuery = (query: string) => this.setState({ query });
   public updateVariables = (variables: string) => this.setState({ variables });
   public updateResult = (results: string) => this.setState({ results });
-  public editorLoaded = async (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => {
+  public editorLoaded = (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => {
     const currentEditor: IEditorInstance = this.state.editors && this.state.editors[editorKey];
     const editors = {
       ...this.state.editors,
-      [editorKey]: {
-        ...currentEditor,
-        editor
-      }
+      [editorKey]: Object.assign(currentEditor || {}, editor)
     };
 
-    this.setState({ editors: editors });
+    this.setState({ editors });
   };
   public reloadSchema = async (): Promise<GraphQLSchema | null> => {
     try {
@@ -149,7 +148,27 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
     }
   };
   public provideHoverInfo = async (position: monaco.Position, token?: monaco.CancellationToken) => {
-    return getHoverInformation(this.state.schema, this.state.query, position);
+    const graphQLPosition = new Position({
+      line: position.lineNumber,
+      character: position.column
+    });
+    console.log("hoverInfo", getHoverInformation(this.state.schema, this.state.query, graphQLPosition));
+    return getHoverInformation(this.state.schema, this.state.query, graphQLPosition);
+
+    // export interface Position {
+    //   line: number;
+    //   character: number;
+    //   lessThanOrEqualTo: (position: Position) => boolean;
+    // }
+    // export class Position {
+    // /**
+    //  * line number (starts at 1)
+    //  */
+    // readonly lineNumber: number;
+    // /**
+    //  * column (the first character in a line is between column 1 and column 2)
+    //  */
+    // readonly column: number;
   };
   public submitQuery = async (): Promise<any> => {
     try {

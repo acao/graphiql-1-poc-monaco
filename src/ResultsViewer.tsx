@@ -24,11 +24,12 @@ export default function ResultsViewer(props: ResultsViewerProps) {
   const ctx = React.useContext(GraphiQLContext);
   const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
     editor = editorInstance;
+    ctx.editorLoaded("results", editor);
   };
   return (
     <MonacoEditor
       width="100%"
-      height="90vh"
+      height="100vh"
       language="json"
       value={ctx.results}
       options={options}

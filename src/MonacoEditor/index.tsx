@@ -1,5 +1,9 @@
 import * as monaco from "monaco-editor";
 import * as React from "react";
+import * as prettier from "prettier";
+import * as prettierStandalone from "prettier/standalone";
+// import * as parserGraphql from "prettier/parser-graphql";
+// import * as parserJSON from "prettier/parser-json";
 
 // heavily adapted from
 // https://github.com/nikeee/react-monaco-editor-ts
@@ -19,6 +23,28 @@ export interface EditorProps {
   editorDidMount?(editor: monaco.editor.IStandaloneCodeEditor, context: typeof monaco): void;
   onChange?(value: string, event: monaco.editor.IModelContentChangedEvent): void;
 }
+
+const createFormatter = (parser: prettier.BuiltInParserName): monaco.languages.DocumentFormattingEditProvider => {
+  return {
+    provideDocumentFormattingEdits: function(
+      document: monaco.editor.ITextModel,
+      options: monaco.languages.FormattingOptions,
+      token: monaco.CancellationToken
+    ): monaco.languages.TextEdit[] {
+      const text = document.getValue();
+      const formatted = prettierStandalone.format(text, { parser });
+      return [
+        {
+          range: document.getFullModelRange(),
+          text: formatted
+        }
+      ];
+    }
+  };
+};
+
+monaco.languages.registerDocumentFormattingEditProvider("json", createFormatter("json"));
+monaco.languages.registerDocumentFormattingEditProvider("graphql", createFormatter("graphql"));
 
 export class MonacoEditor extends React.Component<EditorProps> {
   static defaultProps = {

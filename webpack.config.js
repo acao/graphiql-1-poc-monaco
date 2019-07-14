@@ -1,4 +1,4 @@
-const webpack = require('webpack')
+const webpack = require("webpack");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
@@ -39,7 +39,7 @@ module.exports = {
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"]
-      },
+      }
     ]
   },
   resolve: {
@@ -50,10 +50,9 @@ module.exports = {
       languages: ["json", "graphql"]
     }),
     new HtmlWebpackPlugin({ template: "index.html.ejs" }),
-    new webpack.ContextReplacementPlugin(
-				/graphql-language-service-interface[\\/]dist$/,
-				new RegExp(`^\\./.*\\.js$`)
-			)
+    new webpack.ContextReplacementPlugin(/graphql-language-service-interface[\\/]dist$/, new RegExp(`^\\./.*\\.js$`)),
+    new webpack.ContextReplacementPlugin(/graphql-language-service-utils[\\/]dist$/, new RegExp(`^\\./.*\\.js$`)),
+    new webpack.ContextReplacementPlugin(/graphql-language-service-parser[\\/]dist$/, new RegExp(`^\\./.*\\.js$`))
   ],
   devServer: {
     hot: true,
