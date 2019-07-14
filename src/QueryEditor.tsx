@@ -15,13 +15,14 @@ const options = {
   roundedSelection: false,
   readOnly: false,
   cursorStyle: "line",
-  automaticLayout: false
+  automaticLayout: false,
+  formatOnType: true
 };
 
 export default function(props: QueryEditorProps) {
   let editor;
   const ctx = React.useContext(GraphiQLContext);
-  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+  const didMount = async (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
     editor = editorInstance;
     editor.addCommand(KM.CtrlCmd | KC.Enter, async () => {
       await ctx.submitQuery();
@@ -29,13 +30,7 @@ export default function(props: QueryEditorProps) {
     monaco.languages.registerHoverProvider("graphql", {
       async provideHover(model, position, token) {
         console.log(model, position, token);
-        return ctx.provideHoverInfo(position, token);
-      }
-    });
-    monaco.languages.registerCompletionItemProvider("graphql", {
-      async provideCompletionItems(model, position, token) {
-        console.log(model, position, token);
-        return ctx.provideHoverInfo(position);
+        return ctx.provideHoverInfo(position, undefined);
       }
     });
   };
@@ -43,7 +38,7 @@ export default function(props: QueryEditorProps) {
     <MonacoEditor
       height="60vh"
       width="100%"
-      language={'graphql'}
+      language={"graphql"}
       value={ctx.query}
       options={options}
       onChange={props.updateQuery || ctx.updateQuery}

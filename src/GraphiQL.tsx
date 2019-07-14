@@ -14,7 +14,7 @@ const GraphiQL = () => {
           flexDirection: "row"
         }}
       >
-        <div style={{ display: "flex", width: "50%", flexDirection: "column" }}>
+        <div style={{ display: "flex", width: "50%",  flexDirection: "column" }}>
           <QueryEditor />
           <VariablesEditor  />
         </div>

@@ -1,6 +1,9 @@
 import * as monaco from "monaco-editor";
 import * as React from "react";
 
+// heavily adapted from
+// https://github.com/nikeee/react-monaco-editor-ts
+
 export interface EditorProps {
   defaultValue?: string;
   value: string;
@@ -11,7 +14,7 @@ export interface EditorProps {
   editorWillMount?(context: typeof monaco): void;
   original?: string;
   language?: string;
-  model?: monaco.editor.IModel
+  model?: monaco.editor.IModel;
 
   editorDidMount?(editor: monaco.editor.IStandaloneCodeEditor, context: typeof monaco): void;
   onChange?(value: string, event: monaco.editor.IModelContentChangedEvent): void;
@@ -80,7 +83,7 @@ export class MonacoEditor extends React.Component<EditorProps> {
     }
   }
 
-  editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
+  async editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
     const { editorDidMount } = this.props;
     if (editorDidMount) {
       editorDidMount(editor, monaco);
@@ -108,12 +111,12 @@ export class MonacoEditor extends React.Component<EditorProps> {
     const createOpts: monaco.editor.IEditorConstructionOptions = {
       value,
       ...options
-    }
+    };
     if (language) {
-      createOpts.language = language
+      createOpts.language = language;
     }
     if (model) {
-      createOpts.model = model
+      createOpts.model = model;
     }
     if (container) {
       // Before initializing monaco editor
@@ -122,15 +125,20 @@ export class MonacoEditor extends React.Component<EditorProps> {
       if (theme) {
         monaco.editor.setTheme(theme);
       }
+      window.addEventListener("resize", this.resize);
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }
   }
   public getEditor() {
-    return this.editor
+    return this.editor;
   }
+  public resize = (e: UIEvent) => {
+    this.editor && this.editor.layout();
+  };
 
   destroyMonaco() {
+    window.removeEventListener("resize", this.resize);
     const e = this.editor;
     if (e !== undefined) {
       e.dispose();

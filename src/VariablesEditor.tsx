@@ -3,6 +3,9 @@ import * as monaco from "monaco-editor";
 import GraphiQLContext from "./GraphiQLContext";
 import { MonacoEditor } from "./MonacoEditor";
 
+const options = {
+  formatOnType: true
+};
 const { KeyMod: KM, KeyCode: KC } = monaco;
 
 export type VariablesEditorProps = {
@@ -12,8 +15,9 @@ export type VariablesEditorProps = {
 let editor;
 export default function VariablesEditor(props: VariablesEditorProps) {
   const ctx = React.useContext(GraphiQLContext);
-  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+  const didMount = async (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
     editor = editorInstance;
+    editor.trigger(ctx.variables, "editor.action.formatDocument", null)
     editor.addCommand(KM.CtrlCmd | KC.Enter, async () => {
       await ctx.submitQuery();
     });
@@ -26,6 +30,7 @@ export default function VariablesEditor(props: VariablesEditorProps) {
       value={props.variables || ctx.variables}
       onChange={props.onChangeVariables || ctx.updateVariables}
       editorDidMount={didMount}
+      options={options}
     />
   );
 }

@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
-
+// @ts-ignore
+import useEventListener from "use-event-listener";
 import GraphiQLContext from "./GraphiQLContext";
 
 import { MonacoEditor } from "./MonacoEditor";
@@ -17,8 +18,21 @@ const options = {
   automaticLayout: false,
   wordWrap: "on"
 };
+let editor;
 
 export default function ResultsViewer(props: ResultsViewerProps) {
-  const context = React.useContext(GraphiQLContext);
-  return <MonacoEditor width="100%" height="90vh" language="json" value={context.results} options={options} />;
+  const ctx = React.useContext(GraphiQLContext);
+  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+    editor = editorInstance;
+  };
+  return (
+    <MonacoEditor
+      width="100%"
+      height="90vh"
+      language="json"
+      value={ctx.results}
+      options={options}
+      editorDidMount={didMount}
+    />
+  );
 }
