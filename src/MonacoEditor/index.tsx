@@ -2,8 +2,13 @@ import * as monaco from "monaco-editor";
 import * as React from "react";
 import * as prettier from "prettier";
 import * as prettierStandalone from "prettier/standalone";
-// import * as parserGraphql from "prettier/parser-graphql";
+import * as parserGraphql from "prettier/parser-graphql";
 // import * as parserJSON from "prettier/parser-json";
+
+const parsers = {
+  // json: parserJSON,
+  graphql: parserGraphql
+};
 
 // heavily adapted from
 // https://github.com/nikeee/react-monaco-editor-ts
@@ -24,7 +29,7 @@ export interface EditorProps {
   onChange?(value: string, event: monaco.editor.IModelContentChangedEvent): void;
 }
 
-const createFormatter = (parser: prettier.BuiltInParserName): monaco.languages.DocumentFormattingEditProvider => {
+const createFormatter = (parser: "graphql"): monaco.languages.DocumentFormattingEditProvider => {
   return {
     provideDocumentFormattingEdits: function(
       document: monaco.editor.ITextModel,
@@ -32,7 +37,8 @@ const createFormatter = (parser: prettier.BuiltInParserName): monaco.languages.D
       token: monaco.CancellationToken
     ): monaco.languages.TextEdit[] {
       const text = document.getValue();
-      const formatted = prettierStandalone.format(text, { parser });
+
+      const formatted = prettierStandalone.format(text, { parser: parser, plugins: [parserGraphql] });
       return [
         {
           range: document.getFullModelRange(),
@@ -43,7 +49,6 @@ const createFormatter = (parser: prettier.BuiltInParserName): monaco.languages.D
   };
 };
 
-monaco.languages.registerDocumentFormattingEditProvider("json", createFormatter("json"));
 monaco.languages.registerDocumentFormattingEditProvider("graphql", createFormatter("graphql"));
 
 export class MonacoEditor extends React.Component<EditorProps> {
@@ -154,6 +159,11 @@ export class MonacoEditor extends React.Component<EditorProps> {
       window.addEventListener("resize", this.resize);
       // After initializing monaco editor
       this.editorDidMount(this.editor);
+      setTimeout(() => {
+        if (this.editor) {
+          this.editor.trigger("anyString", "editor.action.formatDocument", {});
+        }
+      }, 5);
     }
   }
   public getEditor() {

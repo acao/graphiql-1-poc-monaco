@@ -17,7 +17,8 @@ export default function VariablesEditor(props: VariablesEditorProps) {
   const ctx = React.useContext(GraphiQLContext);
   const didMount = async (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
     editor = editorInstance;
-    editor.trigger(ctx.variables, "editor.action.formatDocument", null)
+    ctx.editorLoaded("variables", editor);
+    editor.trigger(ctx.variables, "editor.action.formatDocument", null);
     editor.addCommand(KM.CtrlCmd | KC.Enter, async () => {
       await ctx.submitQuery();
     });

@@ -22,7 +22,7 @@ let editor;
 
 export default function ResultsViewer(props: ResultsViewerProps) {
   const ctx = React.useContext(GraphiQLContext);
-  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {
+  const didMount = (editorInstance: monaco.editor.IStandaloneCodeEditor) => {
     editor = editorInstance;
     ctx.editorLoaded("results", editor);
   };

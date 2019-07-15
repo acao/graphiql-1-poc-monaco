@@ -4,7 +4,9 @@ import { getIntrospectionQuery, buildClientSchema, GraphQLSchema } from "graphql
 // @ts-ignore
 import { getHoverInformation } from "graphql-language-service-interface";
 // @ts-ignore
-import { Position } from "graphql-language-service-utils"
+import { g } from "graphql-language-service-parser";
+// @ts-ignore
+import { Position } from "graphql-language-service-utils";
 
 export interface IGraphQLQuery {
   url: string;
@@ -24,9 +26,10 @@ export interface IGraphiQLBaseContext {
 }
 
 export interface IEditorInstance {
-  editor: monaco.editor.IStandaloneCodeEditor | null;
+  editor?: monaco.editor.IStandaloneCodeEditor;
   model?: monaco.editor.IEditorModel | null;
   titleKey?: string | null;
+  theme?: string;
 }
 
 export interface IGraphiQLState {
@@ -41,7 +44,6 @@ export interface IGraphiQLState {
 export interface IGraphiQLContext extends IGraphQLQuery, IGraphiQLBaseContext, IGraphiQLState {}
 
 const editorDefaults = {
-  editor: null,
   model: null
 };
 
@@ -80,7 +82,7 @@ const GraphiQLContext = React.createContext<IGraphiQLContext>({
   updateResult: noOp(),
   reloadSchema: noOp(),
   provideHoverInfo: noOp(),
-  editorLoaded: noOp(),
+  editorLoaded: noOp()
 });
 
 export default GraphiQLContext;
@@ -114,11 +116,8 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
   public updateResult = (results: string) => this.setState({ results });
   public editorLoaded = (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => {
     const currentEditor: IEditorInstance = this.state.editors && this.state.editors[editorKey];
-    const editors = {
-      ...this.state.editors,
-      [editorKey]: Object.assign(currentEditor || {}, editor)
-    };
-
+    const editors = this.state.editors;
+    editors[editorKey].editor = editor
     this.setState({ editors });
   };
   public reloadSchema = async (): Promise<GraphQLSchema | null> => {
@@ -153,6 +152,7 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
       character: position.column
     });
     console.log("hoverInfo", getHoverInformation(this.state.schema, this.state.query, graphQLPosition));
+
     return getHoverInformation(this.state.schema, this.state.query, graphQLPosition);
 
     // export interface Position {
