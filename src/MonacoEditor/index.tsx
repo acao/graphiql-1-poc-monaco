@@ -163,7 +163,7 @@ export class MonacoEditor extends React.Component<EditorProps> {
         if (this.editor) {
           this.editor.trigger("anyString", "editor.action.formatDocument", {});
         }
-      }, 5);
+      }, 300);
     }
   }
   public getEditor() {
