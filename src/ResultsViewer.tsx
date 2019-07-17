@@ -29,7 +29,7 @@ export default function ResultsViewer(props: ResultsViewerProps) {
   return (
     <MonacoEditor
       width="100%"
-      height="100vh"
+      height="90vh"
       language="json"
       value={ctx.results}
       options={options}

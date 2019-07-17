@@ -33,7 +33,9 @@
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-i18next": "^10.11.4",
+    "react-icons": "^3.7.0",
     "styled-components": "^4.3.2",
+    "svg-inline-loader": "^0.8.0",
     "use-event-listener": "^1.0.3"
   },
   "resolutions": {

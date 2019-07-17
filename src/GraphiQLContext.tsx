@@ -16,6 +16,7 @@ export interface IGraphQLQuery {
 export type TEditors = "query" | "variables" | "results";
 
 export interface IGraphiQLBaseContext {
+  setValue: (key: string, value: any) => React.SetStateAction<any>;
   updateQuery: (value: string) => React.SetStateAction<any>;
   updateVariables: (value: string) => React.SetStateAction<any>;
   submitQuery: () => Promise<string>;
@@ -39,6 +40,7 @@ export interface IGraphiQLState {
   hasError: boolean;
   schema: GraphQLSchema | null;
   introspectionJSON: any;
+  activeTab: string;
 }
 
 export interface IGraphiQLContext extends IGraphQLQuery, IGraphiQLBaseContext, IGraphiQLState {}
@@ -47,7 +49,10 @@ const editorDefaults = {
   model: null
 };
 
+import { availablePlugins, pluginManagerState } from './data/plugins' 
+
 export const defaults = {
+  activeTab: 'docs',
   error: "",
   editors: {
     query: {
@@ -69,7 +74,9 @@ export const defaults = {
   variables: '{ "skip": 3, "something": "else", "whoever": "bobobbbbobb2" }',
   query: "query { allFilms { id title }}",
   introspectionJSON: null,
-  url: "https://swapi.graph.cool"
+  url: "https://swapi.graph.cool",
+  availablePlugins,
+  pluginManagerState
 };
 
 const noOp = (returnVal: any = null) => async () => returnVal;
@@ -82,7 +89,8 @@ const GraphiQLContext = React.createContext<IGraphiQLContext>({
   updateResult: noOp(),
   reloadSchema: noOp(),
   provideHoverInfo: noOp(),
-  editorLoaded: noOp()
+  editorLoaded: noOp(),
+  setValue: noOp()
 });
 
 export default GraphiQLContext;
@@ -111,13 +119,15 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
     console.log("hello. loading schema now");
     return this.reloadSchema();
   }
+  // @ts-ignore
+  public setValue = (key: string, value: any) => this.setState({ [key]: value });
   public updateQuery = (query: string) => this.setState({ query });
   public updateVariables = (variables: string) => this.setState({ variables });
   public updateResult = (results: string) => this.setState({ results });
   public editorLoaded = (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => {
     const currentEditor: IEditorInstance = this.state.editors && this.state.editors[editorKey];
     const editors = this.state.editors;
-    editors[editorKey].editor = editor
+    editors[editorKey].editor = editor;
     this.setState({ editors });
   };
   public reloadSchema = async (): Promise<GraphQLSchema | null> => {
@@ -199,7 +209,8 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
           updateResult: this.updateResult,
           reloadSchema: this.reloadSchema,
           provideHoverInfo: this.provideHoverInfo,
-          editorLoaded: this.editorLoaded
+          editorLoaded: this.editorLoaded,
+          setValue: this.setValue
         }}
       >
         {this.props.children}
