@@ -1,10 +1,10 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
-import { getIntrospectionQuery, buildClientSchema, GraphQLSchema } from "graphql";
+import { getIntrospectionQuery, buildClientSchema, GraphQLSchema, printSchema } from "graphql";
+// @ts-ignore,
+import { getHoverInformation, getDiagnostics, getAutocompleteSuggestions } from "graphql-language-service-interface";
 // @ts-ignore
-import { getHoverInformation } from "graphql-language-service-interface";
-// @ts-ignore
-import { g } from "graphql-language-service-parser";
+// import { onlineParser } from "graphql-language-service-parser";
 // @ts-ignore
 import { Position } from "graphql-language-service-utils";
 
@@ -23,6 +23,10 @@ export interface IGraphiQLBaseContext {
   reloadSchema: () => Promise<GraphQLSchema | null>;
   updateResult: (result: string) => React.SetStateAction<any>;
   provideHoverInfo: (position: monaco.Position, token?: monaco.CancellationToken) => Promise<any>;
+  provideCompletionItems: (
+    position: monaco.Position,
+    token?: monaco.CancellationToken
+  ) => monaco.languages.ProviderResult<monaco.languages.CompletionList>;
   editorLoaded: (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => any;
 }
 
@@ -40,19 +44,33 @@ export interface IGraphiQLState {
   hasError: boolean;
   schema: GraphQLSchema | null;
   introspectionJSON: any;
+  schemaSDL: string | null;
   activeTab: string;
+  queryValid: boolean;
 }
 
 export interface IGraphiQLContext extends IGraphQLQuery, IGraphiQLBaseContext, IGraphiQLState {}
 
+const defaultQuery = `
+query MyQuery {
+  films: allFilms {
+    id
+    title
+    planets {
+      name
+    }
+    openingCrawl
+  }
+}
+`;
 const editorDefaults = {
   model: null
 };
 
-import { availablePlugins, pluginManagerState } from './data/plugins' 
+import { availablePlugins, pluginManagerState } from "../data/plugins";
 
 export const defaults = {
-  activeTab: 'docs',
+  activeTab: "docs",
   error: "",
   editors: {
     query: {
@@ -71,8 +89,10 @@ export const defaults = {
   hasError: false,
   results: "",
   schema: null,
+  schemaSDL: null,
   variables: '{ "skip": 3, "something": "else", "whoever": "bobobbbbobb2" }',
-  query: "query { allFilms { id title }}",
+  query: defaultQuery,
+  queryValid: true,
   introspectionJSON: null,
   url: "https://swapi.graph.cool",
   availablePlugins,
@@ -89,6 +109,7 @@ const GraphiQLContext = React.createContext<IGraphiQLContext>({
   updateResult: noOp(),
   reloadSchema: noOp(),
   provideHoverInfo: noOp(),
+  provideCompletionItems: () => ({ suggestions: [] }),
   editorLoaded: noOp(),
   setValue: noOp()
 });
@@ -104,12 +125,21 @@ const fetcher = (state: IGraphQLQuery): Promise<Response> => {
     body: JSON.stringify({
       variables: state.variables,
       query: state.query
-    })
+    }),
   });
 };
 
 interface GraphiQLProviderState extends IGraphiQLState, IGraphQLQuery {}
 
+interface IGLSDiagnostic {
+  severity: number;
+  message: string;
+  source: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+}
 export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState> {
   constructor(props: any) {
     super(props);
@@ -121,7 +151,24 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
   }
   // @ts-ignore
   public setValue = (key: string, value: any) => this.setState({ [key]: value });
-  public updateQuery = (query: string) => this.setState({ query });
+  public updateQuery = (query: string) => {
+    this.setState({ query });
+    const diagnostics = getDiagnostics(query, this.state.schema);
+    const formattedDiagnostics = diagnostics.map((d: IGLSDiagnostic) => ({
+      startLineNumber: d.range.start.line + 1,
+      endLineNumber: d.range.end.line + 1,
+      startColumn: d.range.start.character + 1,
+      endColumn: d.range.end.character + 1,
+      message: d.message,
+      severity: monaco.MarkerSeverity.Error
+    }));
+    if (diagnostics.length > 0) {
+      this.setState({ queryValid: false });
+    }
+    this.setState({ queryValid: true });
+    const editor = this.state.editors.query.editor as monaco.editor.IStandaloneCodeEditor;
+    monaco.editor.setModelMarkers(editor.getModel() as monaco.editor.ITextModel, "linter", formattedDiagnostics);
+  };
   public updateVariables = (variables: string) => this.setState({ variables });
   public updateResult = (results: string) => this.setState({ results });
   public editorLoaded = (editorKey: TEditors, editor: monaco.editor.IStandaloneCodeEditor) => {
@@ -134,17 +181,20 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
     try {
       // const { data: introspection } = require("./schema.json");
       const introspectionResult = await fetcher({
-        ...this.state,
+        url: this.state.url,
         query: getIntrospectionQuery(),
-        variables: `{}`
+        variables: `{}`,
       });
 
       const { data: introspection } = await introspectionResult.json();
       const schema = buildClientSchema(introspection);
+      // parse the schema only one time per load
+      // this might be intensive for large schemas
       this.setState({
         hasError: false,
         introspectionJSON: introspection,
-        schema
+        schema,
+        schemaSDL: printSchema(schema)
       });
       return schema;
     } catch (err) {
@@ -156,29 +206,46 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
       return null;
     }
   };
-  public provideHoverInfo = async (position: monaco.Position, token?: monaco.CancellationToken) => {
+  public provideHoverInfo = async (
+    position: monaco.Position,
+    token?: monaco.CancellationToken,
+    editorType: string = "schema"
+  ) => {
     const graphQLPosition = new Position({
-      line: position.lineNumber,
+      line: position.lineNumber - 1,
       character: position.column
     });
-    console.log("hoverInfo", getHoverInformation(this.state.schema, this.state.query, graphQLPosition));
-
-    return getHoverInformation(this.state.schema, this.state.query, graphQLPosition);
-
-    // export interface Position {
-    //   line: number;
-    //   character: number;
-    //   lessThanOrEqualTo: (position: Position) => boolean;
-    // }
-    // export class Position {
-    // /**
-    //  * line number (starts at 1)
-    //  */
-    // readonly lineNumber: number;
-    // /**
-    //  * column (the first character in a line is between column 1 and column 2)
-    //  */
-    // readonly column: number;
+    graphQLPosition.setCharacter(position.column);
+    graphQLPosition.line = position.lineNumber - 1;
+    const hoverInfo = getHoverInformation(
+      this.state.schema,
+      editorType === "query" ? this.state.query : this.state.schemaSDL,
+      graphQLPosition
+    );
+    const diagnostics = getDiagnostics(this.state.query, this.state.schema);
+    console.log("diagnostics", diagnostics);
+    if (!hoverInfo) {
+      return;
+    }
+    return {
+      contents: [{ value: `${hoverInfo}` }]
+    };
+  };
+  public provideCompletionItems = (
+    position: monaco.Position,
+    token?: monaco.CancellationToken
+  ): monaco.languages.ProviderResult<monaco.languages.CompletionList> => {
+    const graphQLPosition = new Position({
+      line: position.lineNumber - 1,
+      character: position.column - 1
+    });
+    graphQLPosition.setCharacter(position.column - 1);
+    graphQLPosition.line = position.lineNumber - 1;
+    const suggestions = getAutocompleteSuggestions(this.state.schema, this.state.query, graphQLPosition);
+    console.log('suggestions', suggestions)
+    return {
+      suggestions: suggestions.map((s: monaco.languages.CompletionItem) => ({ ...s, insertText: s.label, kind: 3, isDeprecated: undefined })),
+    };
   };
   public submitQuery = async (): Promise<any> => {
     try {
@@ -209,6 +276,7 @@ export class GraphiQLProvider extends React.Component<{}, GraphiQLProviderState>
           updateResult: this.updateResult,
           reloadSchema: this.reloadSchema,
           provideHoverInfo: this.provideHoverInfo,
+          provideCompletionItems: this.provideCompletionItems,
           editorLoaded: this.editorLoaded,
           setValue: this.setValue
         }}

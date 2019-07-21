@@ -1,8 +1,10 @@
 import * as React from "react";
 import styled from "styled-components";
+import { useTranslation } from "react-i18next";
 import { IconType } from "react-icons/lib/esm";
 import Icon from "./Icon";
-import { useGraphiQLContext } from "../hooks";
+import { useGraphiQLContext } from "api/hooks";
+import { SchemaViewer } from 'plugins/graphiql-plugin-raw-schema/RawSchemaViewerPlugin'
 
 type Tab = {
   id: string;
@@ -56,8 +58,7 @@ const TabIcon: React.SFC<{ icon: IconType }> = ({ icon: Icon }) => {
 
 export default function SidePanel(props: SidePanelProps = { open: false }) {
   const ctx = useGraphiQLContext();
-  const activeTab: string = ctx.activeTab
-  const currentPlugins = ctx.pluginManagerState
+  const activeTab: string = ctx.activeTab;
   const activeTabItem = props.tabs && props.tabs.find(({ id }) => id === activeTab);
   if (props.open) {
     return (
@@ -66,17 +67,18 @@ export default function SidePanel(props: SidePanelProps = { open: false }) {
           {props.tabs &&
             props.tabs.map((tab, i) => {
               // @ts-ignore
-
+              const { t } = useTranslation(`tab.${tab.id}`);
+              const title = t(tab.defaultLabel)
               return (
                 // @ts-ignore
                 <Icon
                   tabIndex={i + 1}
                   id={tab.id}
                   key={i}
-                  ariaTitle={tab.defaultLabel}
-                  title={tab.defaultLabel}
+                  ariaTitle={title}
+                  title={title}
                   onClick={() => ctx.setValue("activeTab", tab.id)}
-                  onFocus={() => ctx.setValue("activeTab", tab.id)}
+                  onFocus={() => ctx.setValue("activeTab", tab.id)} // for tabbed navigation/etc
                   active={tab.id === activeTab}
                 >
                   <TabIcon icon={tab.icon} />
@@ -88,7 +90,9 @@ export default function SidePanel(props: SidePanelProps = { open: false }) {
           {activeTabItem && (
             <PanelPane>
               <PaneTitle>{activeTabItem.defaultLabel}</PaneTitle>
-              <PanelPaneBody></PanelPaneBody>
+              <PanelPaneBody>
+                <SchemaViewer/>
+              </PanelPaneBody>
             </PanelPane>
           )}
         </div>

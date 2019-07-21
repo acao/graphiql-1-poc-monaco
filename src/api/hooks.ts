@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
 
-import GraphiQLContext, { TEditors, IGraphiQLContext } from "./GraphiQLContext";
+import GraphiQLContext, { TEditors, IGraphiQLContext } from "api/GraphiQLContext";
 
 export function useGraphiQLContext(): IGraphiQLContext {
   return React.useContext(GraphiQLContext);

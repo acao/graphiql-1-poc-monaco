@@ -1,13 +1,11 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import GraphiQLContext from "./GraphiQLContext";
-// import GraphiQLPlugin from './GraphiQLPlugin';
+import GraphiQLContext from "./api/GraphiQLContext";
 
 import GraphiQL from "./GraphiQL";
 
 export {
-  GraphiQLContext,
-  // GraphiQLPlugin
+  GraphiQLContext
 }
 
 ReactDOM.render(

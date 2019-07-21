@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useGraphiQLContext } from "../hooks";
+import { useGraphiQLContext } from "api/hooks";
 import { IoMdBook, IoMdOptions, IoMdRewind } from "react-icons/io";
 
 export const DocsPanel = () => {
@@ -23,6 +23,28 @@ export const availablePlugins = [
   {
     id: "doc-explorer",
     title: "Doc Explorer",
+    description: "A tool for looking up values by and searching through the GraphQL Document Explorer.",
+    panels: [
+      {
+        location: "side",
+        PanelComponent: DocsPanel,
+        tab: {
+          label: "Docs",
+          icon: IoMdBook
+        }
+      }
+    ],
+    settings: [
+      {
+        id: "open-by-default",
+        label: "Doc Explorer Open by Default",
+        type: "boolean"
+      }
+    ]
+  },
+  {
+    id: "raw-doc-explorer",
+    title: "Raw Doc Explorer",
     description: "A tool for looking up values by and searching through the GraphQL Document Explorer.",
     panels: [
       {
@@ -77,13 +99,15 @@ export const availablePlugins = [
 export const pluginManagerState = [
   {
     "doc-explorer": {
-      enabled: true,
+      enabled: false,
       installed: true,
       state: {
         currentSearch: "last search",
         currentType: "SomeInput"
-      },
-      plugin: availablePlugins[0]
+      }
+    },
+    "raw-doc-explorer": {
+      enabled: true
     }
   }
 ];

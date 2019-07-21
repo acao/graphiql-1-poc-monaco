@@ -1,10 +1,8 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
-// @ts-ignore
-import useEventListener from "use-event-listener";
-import GraphiQLContext from "./GraphiQLContext";
+import GraphiQLContext from "api/GraphiQLContext";
 
-import { MonacoEditor } from "./MonacoEditor";
+import { MonacoEditor } from "components/MonacoEditor";
 
 export type ResultsViewerProps = {
   results?: string;
@@ -18,6 +16,7 @@ const options = {
   automaticLayout: false,
   wordWrap: "on"
 };
+
 let editor;
 
 export default function ResultsViewer(props: ResultsViewerProps) {

@@ -1,6 +1,7 @@
 const webpack = require("webpack");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { TsConfigPathsPlugin } = require("awesome-typescript-loader");
 const path = require("path");
 const isDev = process.env.NODE_ENV === "development";
 
@@ -37,7 +38,7 @@ module.exports = {
       },
       {
         test: /\.(ts|tsx)$/,
-        use: [{ loader: "ts-loader" }]
+        use: [{ loader: "awesome-typescript-loader" }]
       },
       {
         test: /\.css$/,
@@ -45,16 +46,17 @@ module.exports = {
       },
       {
         test: /\.svg$/,
-        use: [{ loader: "svg-inline-loader"  }]
+        use: [{ loader: "svg-inline-loader" }]
       }
     ]
   },
   resolve: {
-    extensions: [".js", ".json", ".ts", ".tsx", ".jsx", ".css", ".mjs"]
+    extensions: [".js", ".json", ".ts", ".tsx", ".jsx", ".css", ".mjs"],
+    plugins: [new TsConfigPathsPlugin()]
   },
   plugins: [
     new MonacoWebpackPlugin({
-      languages: ["json", "graphql"]
+      languages: ["json", "graphql", "markdown"]
     }),
     new HtmlWebpackPlugin({ template: "index.html.ejs" }),
     new webpack.ContextReplacementPlugin(/graphql-language-service-interface[\\/]dist$/, new RegExp(`^\\./.*\\.js$`)),

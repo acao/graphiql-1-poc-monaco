@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
-import GraphiQLContext from "./GraphiQLContext";
-import { MonacoEditor } from "./MonacoEditor";
+import GraphiQLContext from "api/GraphiQLContext";
+import { MonacoEditor } from "components/MonacoEditor";
 
 const options = {
   formatOnType: true
@@ -12,7 +12,9 @@ export type VariablesEditorProps = {
   variables?: string;
   onChangeVariables?: (variables: any) => void;
 };
+
 let editor;
+
 export default function VariablesEditor(props: VariablesEditorProps) {
   const ctx = React.useContext(GraphiQLContext);
   const didMount = async (editorInstance: monaco.editor.IStandaloneCodeEditor, context: typeof monaco) => {

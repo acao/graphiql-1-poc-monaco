@@ -1,9 +1,10 @@
 import * as React from "react";
 import * as monaco from "monaco-editor";
 import styled from "styled-components";
-import { MonacoEditor } from "./MonacoEditor";
-import GraphiQLContext, { IGraphiQLContext } from "./GraphiQLContext";
-import Icon from "./components/Icon";
+// @ts-ignore
+import { MonacoEditor } from "components/MonacoEditor";
+import GraphiQLContext, { IGraphiQLContext } from "api/GraphiQLContext";
+import Icon from "./Icon";
 
 import { IoIosPlay, IoIosCheckmark } from "react-icons/io";
 
@@ -83,11 +84,17 @@ const querySubmission = (ctx: IGraphiQLContext, editor: monaco.editor.IStandalon
 
 const queryHover = (ctx: IGraphiQLContext, editor: monaco.editor.IStandaloneCodeEditor): void => {
   // TODO: not yet working but close
-  // monaco.languages.registerHoverProvider("graphql", {
-  //   async provideHover(model, position, token) {
-  //     return ctx.provideHoverInfo(position, token);
-  //   }
-  // });
+  monaco.languages.registerHoverProvider("graphql", {
+    async provideHover(model, position, token) {
+      // @ts-ignore
+      return ctx.provideHoverInfo(position, token, editor.editorId);
+    }
+  });
+  monaco.languages.registerCompletionItemProvider("graphql", {
+    async provideCompletionItems(model, position) {
+      return ctx.provideCompletionItems(position);
+    }
+  });
 };
 // const queryEditor = useEditor("query", GraphiQLContext);
 // useEditorCommand(queryEditor, KM.CtrlCmd | KC.Enter, async () => {
@@ -98,6 +105,8 @@ export default function(props: QueryEditorProps) {
   const ctx = React.useContext(GraphiQLContext);
   const didMount = async (editorInstance: monaco.editor.IStandaloneCodeEditor) => {
     editor = editorInstance;
+    // @ts-ignore
+    editor.editorId = "query";
     ctx.editorLoaded("query", editor);
     querySubmission(ctx, editor);
     queryHover(ctx, editor);

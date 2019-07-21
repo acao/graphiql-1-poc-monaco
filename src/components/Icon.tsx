@@ -8,7 +8,7 @@ const Icon = styled.span<{ active?: boolean }>`
   cursor: pointer;
   background-color: ${props => (props.active ? props.theme.primary : "transparent")};
   &:hover {
-    background-color: paleturquoise;
+    background-color: ${props => props.theme};
   }
   &:focus {
     border: 0 none;
